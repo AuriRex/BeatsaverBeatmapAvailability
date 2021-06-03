@@ -1,0 +1,16 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/beat-saber-modding-group/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "BeatsaverBeatmapAvailability",
+  "name": "BeatsaverBeatmapAvailability",
+  "author": "AuriRex",
+  "version": "0.0.1",
+  "description": "",
+  "gameVersion": "1.15.0",
+  "dependsOn": {
+    "BSIPA": "^4.1.6",
+    "SiraUtil": "^2.5.3",
+    "SongCore": "^3.3.1",
+    "BeatSaberMarkupLanguage": "^1.5.2",
+    "SongDataCore": "^1.3.7"
+  }
+}
