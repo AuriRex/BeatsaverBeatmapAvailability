@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
 
@@ -16,21 +17,18 @@ namespace BeatsaverBeatmapAvailability.Managers
 
         public void Initialize()
         {
-            SharedCoroutineStarter.instance.StartCoroutine(Utilities.Utilities.DoAfter(.02f, () => {
+            _ = Task.Run(async () => {
+                await Task.Delay(200);
+                if (SongDataCore.Plugin.Songs == null) return;
                 SongDataCore.Plugin.Songs.OnDataFinishedProcessing += HandleOnDataFinishedProcessing;
-            }));
-        }
-
-        public bool TryGetSongByThing()
-        {
-            return false;
+            });
         }
 
         public bool TryGetSongByHash(string hash, out BeatStarSong songData)
         {
             songData = null;
             if (!IsReady) return false;
-            return SongDataCore.Plugin.Songs.Data.Songs.TryGetValue(hash, out songData);
+            return SongDataCore.Plugin.Songs?.Data?.Songs?.TryGetValue(hash, out songData) ?? false;
         }
 
         public void HandleOnDataFinishedProcessing()

@@ -27,8 +27,9 @@ namespace BeatsaverBeatmapAvailability.Managers
 
         /// <summary>
         /// Time in seconds after which cached "Online" Beatmaps are considered stale.
+        /// Default is 1 hour
         /// </summary>
-        public float OnlineCacheStaleTime { get; private set; } = 30;
+        public float OnlineCacheStaleTime { get; private set; } = 3600;
 
         public void Initialize()
         {

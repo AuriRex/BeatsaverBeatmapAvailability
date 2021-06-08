@@ -1,17 +1,32 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
+using UnityEngine;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace BeatsaverBeatmapAvailability.Configuration
 {
     internal class PluginConfig
     {
-        public virtual bool Enabled { get; set; } = true; // Must be 'virtual' if you want BSIPA to detect a value change and save the config automatically.
+        public event Action onConfigChanged;
+
+        public virtual bool Enabled { get; set; } = true;
         public virtual bool AutoCheck { get; set; } = false;
+
+        public virtual ButtonData ButtonSettings { get; set; } = new ButtonData();
+
+        [NonNullable, UseConverter(typeof(ListConverter<ButtonData>))]
+        public virtual List<ButtonData> ButtonPresets { get; set; } = new List<ButtonData>() {
+            new ButtonData(),
+            new ButtonData()
+            {
+                Position = new SVector2(40, -40)
+            }
+        };
 
         [NonNullable, UseConverter(typeof(ListConverter<OfflineBeatmap>))]
         public virtual List<OfflineBeatmap> OfflineBeatmaps { get; set; } = new List<OfflineBeatmap>();
@@ -21,6 +36,67 @@ namespace BeatsaverBeatmapAvailability.Configuration
             public virtual string Name { get; set; }
             public virtual string Hash { get; set; }
             public virtual string BeatSaverKey { get; set; }
+        }
+
+        public class ButtonData
+        {
+            public virtual SVector2 Position { get; set; } = new SVector2(24, 5);
+            public virtual float Scale { get; set; } = 1f;
+        }
+
+        public class SVector2
+        {
+            public SVector2()
+            {
+            }
+            public SVector2(float x, float y)
+            {
+                X = x;
+                Y = y;
+            }
+
+            public virtual float X { get; set; } = 0;
+            public virtual float Y { get; set; } = 0;
+
+            public Vector3 ToVector3()
+            {
+                return new Vector3(X,Y,0);
+            }
+
+            public void FromVector3(Vector3 vector)
+            {
+                X = vector.x;
+                Y = vector.y;
+            }
+        }
+
+        public class SVector3
+        {
+            public SVector3()
+            {
+            }
+            public SVector3(float x, float y, float z)
+            {
+                X = x;
+                Y = y;
+                Z = z;
+            }
+
+            public virtual float X { get; set; } = 0;
+            public virtual float Y { get; set; } = 0;
+            public virtual float Z { get; set; } = 0;
+
+            public Vector3 ToVector3()
+            {
+                return new Vector3(X, Y, Z);
+            }
+
+            public void FromVector3(Vector3 vector)
+            {
+                X = vector.x;
+                Y = vector.y;
+                Z = vector.z;
+            }
         }
 
         /// <summary>
@@ -37,6 +113,7 @@ namespace BeatsaverBeatmapAvailability.Configuration
         public virtual void Changed()
         {
             // Do stuff when the config is changed.
+            onConfigChanged?.Invoke();
         }
 
         /// <summary>

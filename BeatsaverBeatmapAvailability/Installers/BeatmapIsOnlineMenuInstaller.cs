@@ -10,7 +10,7 @@ namespace BeatsaverBeatmapAvailability.Installers
         {
             Container.BindInterfacesAndSelfTo<ButtonManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<SongDataCoreZenjectWrapper>().AsSingle();
-            Container.BindInterfacesAndSelfTo<BeatmapAvailabilityChecker>().AsSingle();
+            Container.Bind<BeatmapAvailabilityChecker>().ToSelf().AsSingle();
             Container.BindInterfacesAndSelfTo<BeatmapAvailabilityCacheManager>().AsSingle();
         }
     }

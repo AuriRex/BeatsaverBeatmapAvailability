@@ -142,6 +142,7 @@
     <Compile Include="Managers\BeatSaverAPIManager.cs" />
     <Compile Include="Managers\BeatmapAvailabilityCacheManager.cs" />
     <Compile Include="Managers\SongDataCoreZenjectWrapper.cs" />
+    <Compile Include="Models\AvailabilityData.cs" />
     <Compile Include="Models\ModMeta.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Logger.cs" />

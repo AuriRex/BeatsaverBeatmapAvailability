@@ -1,4 +1,6 @@
-﻿using BeatsaverBeatmapAvailability.UI;
+﻿using BeatsaverBeatmapAvailability.Models;
+using BeatsaverBeatmapAvailability.UI;
+using BeatSaverSharp;
 using SongDataCore.BeatStar;
 using System;
 using System.Collections;
@@ -11,58 +13,59 @@ using Zenject;
 
 namespace BeatsaverBeatmapAvailability.Managers
 {
-    // TODO: actually use this instead of the spaghetti in ButtonManager
-    class BeatmapAvailabilityChecker : IInitializable, IDisposable
+    class BeatmapAvailabilityChecker
     {
-        private readonly SongDataCoreZenjectWrapper _songDataCoreZenjectWrapper;
-        private readonly ButtonManager _buttonManager;
+        private readonly BeatSaverAPIManager _beatSaverAPIManager;
+        private readonly BeatmapAvailabilityCacheManager _beatmapAvailabilityCacheManager;
 
-        public bool IsReady
+        public BeatmapAvailabilityChecker(BeatSaverAPIManager beatSaverAPIManager, BeatmapAvailabilityCacheManager beatmapAvailabilityCacheManager)
         {
-            get
+            _beatSaverAPIManager = beatSaverAPIManager;
+            _beatmapAvailabilityCacheManager = beatmapAvailabilityCacheManager;
+        }
+
+        internal async Task<AvailabilityData> CheckIfBeatmapIsAvailable(IPreviewBeatmapLevel previewBeatmapLevel)
+        {
+            return await CheckIfBeatmapIsAvailableByHash(SongCore.Collections.hashForLevelID(previewBeatmapLevel.levelID));
+        }
+
+        public async Task<AvailabilityData> CheckIfBeatmapIsAvailableByHash(string hash)
+        {
+            Availability availability = Availability.Offline;
+            Beatmap beatmap = null;
+            string statusText;
+            if (_beatmapAvailabilityCacheManager.HashIsCached(hash))
             {
-                return SongCore.Loader.AreSongsLoaded && _songDataCoreZenjectWrapper.IsReady;
+                statusText = $"BeatSaverKey: {_beatmapAvailabilityCacheManager.GetOldBeatSaverKeyIfAvailable(hash)}";
+                if (_beatmapAvailabilityCacheManager.IsProbablyOnline(hash))
+                    availability = Availability.Online;
+                else if (_beatmapAvailabilityCacheManager.IsOffline(hash))
+                    availability = Availability.Offline;
             }
-        }
-
-        public BeatmapAvailabilityChecker(SongDataCoreZenjectWrapper songDataCoreZenjectWrapper, ButtonManager buttonManager)
-        {
-            _songDataCoreZenjectWrapper = songDataCoreZenjectWrapper;
-            _buttonManager = buttonManager;
-        }
-
-        public void Initialize()
-        {
-            _buttonManager.OnButtonPressed += _buttonManager_OnButtonPressed;
-        }
-
-        private void _buttonManager_OnButtonPressed(string hash, string songName, bool isWIP)
-        {
-            if (string.IsNullOrEmpty(hash)) return;
-            if (_songDataCoreZenjectWrapper.TryGetSongByHash(hash, out var test))
+            else
             {
-                Logger.log.Debug("key_from_cached_song_data_core: " + test.key);
+                // Beatmap not cached, contact BeatSaver and cache it.
+                beatmap = await _beatSaverAPIManager.GetMapByHash(hash);
+                if (BeatSaverAPIManager.MapIsOffline(beatmap))
+                {
+                    SongCore.Loader.CustomLevels.TryGetValue(hash, out var localBeatmapPreview);
+                    _beatmapAvailabilityCacheManager.AddOfflineBeatmap(hash, localBeatmapPreview?.songName ?? hash);
+                    statusText = $"BeatSaverKey: {_beatmapAvailabilityCacheManager.GetOldBeatSaverKeyIfAvailable(hash)}";
+                    availability = Availability.Offline;
+                }
+                else
+                {
+                    _beatmapAvailabilityCacheManager.AddOnlineBeatmap(hash, beatmap);
+                    statusText = $"BeatSaverKey: {beatmap.Key}";
+                    availability = Availability.Online;
+                }
             }
+
+            return new AvailabilityData() {
+                Availability = availability,
+                Beatmap = beatmap,
+                KeyText = statusText
+            };
         }
-
-        public bool CheckIfBeatmapAvailableByHash(string hash)
-        {
-            return false;
-        }
-
-        private bool BeatmapIsOnline(string key)
-        {
-
-            return false;
-        }
-
-        public void Dispose()
-        {
-            if (_buttonManager != null)
-            {
-                _buttonManager.OnButtonPressed -= _buttonManager_OnButtonPressed;
-            }
-        }
-
     }
 }
